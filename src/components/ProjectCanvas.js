@@ -1,31 +1,46 @@
-import {useContext, useState, useEffect, useRef} from 'react';
-import {ProjectContext, GridContext} from '../contexts';
+import {useContext, useState, useEffect, useRef, forwardRef, useImperativeHandle} from 'react';
+import { GridContext } from '../contexts';
 import * as THREE from 'three';
 import { Canvas, useLoader, useThree } from '@react-three/fiber';
 import { OrbitControls, OrthographicCamera, PerspectiveCamera, useHelper } from '@react-three/drei'
 import { TextureLoader, Vector3, CameraHelper, Vector2, ShapeGeometry } from 'three'
 import { LineGeometry, LineMaterial, Line2, FontLoader } from 'three/examples/jsm/Addons.js'
 
-export default function ProjectCanvas() {
-    const {gridStep, gridCount, gridPoints, gridLines} = useContext(GridContext);
-    const disc = useLoader(TextureLoader, 'disc.png');
+export default function ProjectCanvas(props) {
+    const {gridStep, gridCount, gridPoints, gridLines, resetGrid, setResetGrid} = useContext(GridContext);
     const font = useLoader(FontLoader, 'helvetiker_regular.typeface.json');
+    const gridRef = useRef();
+
+    useEffect(() => {
+      if (!resetGrid) {
+        return;
+      }
+      if (gridRef && gridRef.current) {
+        gridRef.current.clearGrid();
+        setResetGrid(false);
+      }
+    }, [resetGrid]);
+
+    // useEffect(() => {
+    //   console.log(props.id, props.width, props.height)
+    // }, [])
 
     return (
         <div style={{
             display: "flex",
             backgroundColor: "white",
-            // border: "1px solid black", 
-            // boxSizing: "border-box",
-            width: "100dvw",
-            height: "calc(100dvh - 80px)"
+            borderTop: "1px solid #dddddd", 
+            borderRight: "1px solid #dddddd",
+            borderTopRightRadius: "10px",
+            boxSizing: "border-box",
+            width: props.width,
+            height: props.height
         }}>
             <Canvas style={{
-                // top:'70px', 
-                height: 'calc(100dvh - 80px)', 
-                width: '100dvw'}}
-            >
-                <PerspectiveCamera makeDefault position={[-2, 3, 4]} near={0.01} zoom={0.4} fov={20} />
+                // width: props.width,
+                // height: props.height
+            }}>
+                <PerspectiveCamera makeDefault position={[-4, 3, 4]} near={0.01} zoom={0.4} fov={20} />
                 <OrbitControls
                     makeDefault
                     enablePan={true}
@@ -33,34 +48,10 @@ export default function ProjectCanvas() {
                     enableRotate={true}
                     target={[0, 0, 0]}
                 />
-                <ambientLight />
+                <ambientLight gridPoints={gridPoints} gridLines={gridLines}/>
                 
-
-                {/* { gridPoints.map((_, idx) => {
-                  if (idx % 3 !== 0)
-                    return
-                  return (
-                    <points key={idx}> 
-                      <pointsMaterial map={disc} depthTest={false} color='#ee0000' sizeAttenuation={true} size={0.2} transparent={true} alphaTest={0.5} />
-                      <bufferGeometry >
-                        <bufferAttribute attach='attributes-position' count={1} array={new Float32Array([point[idx], point[idx + 1], point[idx + 2]])} itemSize={3} />
-                      </bufferGeometry>
-                    </points>
-                  )})
-                } */}
-            
-                { gridLines.map((ll, idx) => {
-                  return (
-                    <>
-                        <line key={idx}>
-                          <lineBasicMaterial color='#cccccc'/>
-                          <bufferGeometry>
-                            <bufferAttribute attach='attributes-position' count={ll.length / 3} array={new Float32Array(ll)} itemSize={3} />
-                          </bufferGeometry>
-                        </line>
-                    </>
-                  )})
-                }
+                <Grid ref={gridRef} gridPoints={gridPoints} gridLines={gridLines}/>
+                
 
                 { [...Array(gridCount.x + 1)].map((_, idx) => {
                     return (
@@ -90,3 +81,68 @@ export default function ProjectCanvas() {
         </div>
     )
 }
+
+const Grid = forwardRef((props, ref) => {
+  const {scene} = useThree();
+  const [point, setPoint] = useState([])
+  const [lines, setLines] = useState([]) 
+  const gridLineRef = useRef([])
+  const gridPointRef = useRef([])
+  const disc = useLoader(TextureLoader, 'disc.png');
+
+  useEffect(() => {
+    setPoint(props.gridPoints);
+    setLines(props.gridLines);
+  }, [props.gridLines, props.gridPoints]);
+
+  useImperativeHandle(ref, () => ({
+    clearGrid() {
+      console.log('lines:', gridLineRef.current.length, 'points:', gridPointRef.current.length)
+      for (let i = 0; i < lines.length; i++) {
+        gridLineRef.current[i].geometry.dispose()
+        gridLineRef.current[i].material.dispose()
+        scene.remove(gridLineRef.current[i])
+      }
+      for (let i = 0; i < point.length / 3; i++) {
+        if (!gridPointRef.current[i]) {
+          continue;
+        }
+        gridPointRef.current[i].geometry.dispose()
+        gridPointRef.current[i].material.dispose()
+        scene.remove(gridPointRef.current[i])
+      }
+      setPoint([])
+      setLines([])
+    }
+  }));
+
+  return (
+    <>
+      {/* { point.map((_, idx) => {
+            if (idx % 3 !== 0)
+              return
+            return (
+              <points key={idx} ref={p => gridPointRef.current[idx / 3] = p}> 
+                <pointsMaterial map={disc} depthTest={false} color='#ee0000' sizeAttenuation={true} size={0.2} transparent={true} alphaTest={0.5} />
+                <bufferGeometry >
+                  <bufferAttribute attach='attributes-position' count={1} array={new Float32Array([point[idx], point[idx + 1], point[idx + 2]])} itemSize={3} />
+                </bufferGeometry>
+              </points>
+            )})
+          } */}
+      
+      { lines.map((ll, idx) => {
+        return (
+          <>
+              <line key={idx} ref={l => gridLineRef.current[idx] = l}>
+                <lineBasicMaterial color='#cccccc'/>
+                <bufferGeometry>
+                  <bufferAttribute attach='attributes-position' count={ll.length / 3} array={new Float32Array(ll)} itemSize={3} />
+                </bufferGeometry>
+              </line>
+          </>
+        )})
+      }
+    </>
+  )
+})

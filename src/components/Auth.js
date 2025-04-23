@@ -1,6 +1,7 @@
 import {useContext, useState, useEffect, useRef} from 'react';
 import {UserContext} from '../contexts';
 import {auth, login, signup} from '../services';
+import {Background} from '../components';
 
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, 
     Button, TextField, Tabs, Tab, FormControlLabel, Checkbox
@@ -158,18 +159,8 @@ export default function Auth() {
 
     return (
         <div>
-            <Dialog
-                open
-                fullWidth
-                slotProps={{
-                    backdrop: {sx: {
-                        // backgroundImage: "url(auth_bg.png)",
-                        // backgroundRepeat: "no-repeat",
-                        // backgroundSize: "100% 100%"
-                        backgroundColor: "white"
-                    }}
-                }}
-            >
+            <Background />
+            <Dialog open fullWidth>
                 <Tabs
                     value={mode}
                     onChange={(e, val) => setMode(val)}

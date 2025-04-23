@@ -8,5 +8,7 @@ export const GridContext = createContext({
     'gridPoints': [],
     'setGridPoints': () => {},
     'gridLines': [],
-    'setGridLines': () => {}
+    'setGridLines': () => {},
+    'resetGrid': {},
+    'setResetGrid': () => {}
 })

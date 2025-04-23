@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { ProjectContext } from '../contexts';
 import { Button, Menu, MenuItem, Divider, Toolbar, Grow, Backdrop, ListItemIcon } from '@mui/material';
-import { AccountCircle, ArrowRight, LibraryBooksOutlined, SettingsOutlined, LogoutOutlined } from '@mui/icons-material';
+import { AccountCircle, ArrowRight, LibraryBooksOutlined, SettingsOutlined, LogoutOutlined, CircleNotifications } from '@mui/icons-material';
 
 export default function AppBar(props) {
     const {loadedProject} = useContext(ProjectContext)
@@ -30,12 +30,12 @@ export default function AppBar(props) {
         setSubMenuOpen("");
     };
 
-    const materialMenu = () => {
-      props.materialOpen(true);
+    const action = (func) => {
       setAnchorEl(undefined);
       setMenuOpen("");
       setSubMenuOpen("");
-    };
+      func(true);
+    }
 
     return (
       <div>
@@ -67,7 +67,7 @@ export default function AppBar(props) {
                 slots={{backdrop: (<Backdrop onClick={(event) => console.log("test", event)} />)}}
               //   hideBackdrop
               >
-                  <MenuItem onClick={props.createProject}>New Project</MenuItem>
+                  <MenuItem onClick={() => action(props.createProject)}>New Project</MenuItem>
                   <MenuItem>Open Project</MenuItem>
                   <Divider />
                   <MenuItem disabled={!loadedProject}>Save Project</MenuItem>
@@ -98,7 +98,7 @@ export default function AppBar(props) {
                 TransitionComponent={Grow}
                 anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
               >
-                  <MenuItem onClick={materialMenu} >Materials</MenuItem>
+                  <MenuItem onClick={() => action(props.materialDialog)}>Materials</MenuItem>
                   <Divider />
                   <MenuItem 
                     onClick={handleExpand}
@@ -108,7 +108,7 @@ export default function AppBar(props) {
                       <ArrowRight sx={{marginLeft: "auto"}} />
                   </MenuItem>
                   <Divider />
-                  <MenuItem onClick={props.openGridDialog}>Grids</MenuItem>
+                  <MenuItem onClick={() => action(props.gridDialog)}>Grids</MenuItem>
                   <Divider />
                   <MenuItem>Groups</MenuItem>
                   <MenuItem>Section Cuts</MenuItem>
@@ -227,6 +227,21 @@ export default function AppBar(props) {
 
             <Button
                 sx={{color: "inherit"}}
+                menu="notifications"
+                onClick={handleClick}>
+              <CircleNotifications fontSize='large' />
+            </Button>
+            <Menu
+              anchorEl={anchorEl}
+              open={menuOpen === "notifications"}
+              onClose={handleClose}
+              TransitionComponent={Grow}
+              anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+            >
+            </Menu>
+
+            <Button
+                sx={{color: "inherit"}}
                 menu="user"
                 onClick={handleClick}>
               <AccountCircle fontSize='large' />
@@ -252,7 +267,7 @@ export default function AppBar(props) {
                   Settings
                 </MenuItem>
                 <Divider />
-                <MenuItem>
+                <MenuItem onClick={() => action(props.logout)}>
                   <ListItemIcon>
                     <LogoutOutlined fontSize="small" />
                   </ListItemIcon> 

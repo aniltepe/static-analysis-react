@@ -11,3 +11,7 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.MuiDialogActions-root .MuiButton-root {
+  background-color: rgb(12, 20, 49) !important;
+}

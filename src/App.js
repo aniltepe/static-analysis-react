@@ -1,39 +1,56 @@
 import { useContext, useState, Suspense, useEffect } from 'react'
-import { AppBar, Material, Auth, Landing, ProjectView } from './components'
+import { AppBar, Material, Auth, Landing, ProjectView, GridDialog, ToolBar } from './components'
 import { UserContext, ProjectContext, GridContext } from './contexts'
 import { calculateGrid } from './utils'
 
 function App() {
-  const [materialMenuOpen, setMaterialMenuOpen] = useState(false);
+  const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
+  const [gridDialogOpen, setGridDialogOpen] = useState(false);
+
   const [loggedUser, setLoggedUser] = useState(undefined);
   const [loadedProject, setLoadedProject] = useState(undefined);
+
   const [gridStep, setGridStep] = useState({});
   const [gridCount, setGridCount] = useState({});
   const [gridPoints, setGridPoints] = useState([]);
   const [gridLines, setGridLines] = useState([]);
+  const [resetGrid, setResetGrid] = useState(false);
 
-  const createProject = () => {
-    setLoadedProject({
-      name: "Untitled0", 
-      config: {gridStep: {x: 1.0, y: 1.0, z: 1.0}, gridCount: {x: 2, y: 2, z: 3}},
-
-    });
-  };
-
-  const openGridDialog = () => {
-    console.log("grid opened");
-  };
+  const [undoList, setUndoList] = useState([]);
+  const [redoList, setRedoList] = useState([]);
 
   useEffect(() => {
     if (!loadedProject) {
       return;
     }
-    setGridStep(loadedProject.config.gridStep);
-    setGridCount(loadedProject.config.gridCount);
-    const [pts, lns] = calculateGrid(loadedProject.config.gridStep, loadedProject.config.gridCount);
+    setGridComponents(loadedProject.config.gridStep, loadedProject.config.gridCount);
+  }, [loadedProject]);
+
+  const createProject = () => {
+    setLoadedProject({
+      name: "Untitled0", 
+      config: {gridStep: {x: 1.0, y: 1.0, z: 1.0}, gridCount: {x: 2, y: 2, z: 3}},
+    });
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token")
+    setLoggedUser(undefined);
+  };
+
+  const setGridComponents = (step, count) => {
+    // console.log(step, count);
+    setGridStep(step);
+    setGridCount(count);
+    const [pts, lns] = calculateGrid(step, count);
     setGridPoints(pts);
     setGridLines(lns);
-  }, [loadedProject]);
+  };
+
+  const gridChanged = (oldval, newval) => {
+    setResetGrid(true);
+    setUndoList([...undoList, {type: "grid", old: oldval, new: newval}]);
+  }
 
   return (
     <div className="App">
@@ -45,21 +62,33 @@ function App() {
           <>            
               <ProjectContext.Provider value={{loadedProject, setLoadedProject}}>
                 <AppBar
-                  materialOpen={setMaterialMenuOpen}
                   createProject={createProject}
-                  openGridDialog={openGridDialog}
+                  materialDialog={setMaterialDialogOpen}
+                  gridDialog={setGridDialogOpen}
+                  logout={logout}
                 />
                 {!loadedProject && (              
                   <Landing createProject={createProject} />
                 )}
                 {loadedProject && (
                   <GridContext.Provider 
-                    value={{gridStep, gridCount, gridPoints, gridLines}}>
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <ProjectView></ProjectView>
-                    </Suspense>
+                    value={{gridStep, gridCount, gridPoints, gridLines, resetGrid, setResetGrid}}>
+                    <>
+                      <ToolBar
+                        undoList={undoList}
+                        redoList={redoList} />  
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <ProjectView></ProjectView>
+                      </Suspense>
+                      { gridDialogOpen && (
+                        <GridDialog
+                          open={setGridDialogOpen}
+                          grid={setGridComponents}
+                          values={{spacing: gridStep, count: gridCount}}
+                          change={gridChanged} /> 
+                      )}
+                    </>
                   </GridContext.Provider>
-                  
                 )}
               </ProjectContext.Provider> 
           </>        

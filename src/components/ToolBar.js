@@ -1,5 +1,4 @@
 import {useContext, useState, useEffect, useRef} from 'react';
-import {ProjectContext} from '../contexts';
 import { styled } from '@mui/material/styles';
 import { Redo, Undo } from '@mui/icons-material';
 import { IconButton, Switch, Stack, Typography } from '@mui/material';
@@ -51,7 +50,7 @@ const AntSwitch = styled(Switch)(({ theme }) => ({
     },
 }));
 
-export default function ToolBar() {
+export default function ToolBar(props) {
     return (
         <div style={{
             display: "flex", 
@@ -61,11 +60,11 @@ export default function ToolBar() {
             height: "30px",
             borderBottom: "1px solid #dddddd", 
             boxSizing: "border-box"
-        }}>
-            <IconButton>
+        }}> 
+            <IconButton sx={{paddingLeft: "3px", paddingRight: "3px"}} disabled={props.undoList.length === 0}>
                 <Undo />
             </IconButton>
-            <IconButton>
+            <IconButton sx={{paddingLeft: "3px", paddingRight: "3px"}} disabled={props.redoList.length === 0}>
                 <Redo />
             </IconButton>
             <Stack

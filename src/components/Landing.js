@@ -5,13 +5,7 @@ import { Button, Card, CardContent, CardHeader, List, ListItem, ListItemText, Ty
 import { NoteAdd, FindInPage, UploadFile, AutoAwesome, Schedule, PushPin } from '@mui/icons-material';
 
 export default function Landing(props) {    
-    const {loadedProject, setLoadedProject} = useContext(ProjectContext)
-
-    const handleNewProject = () => {
-        setLoadedProject({
-            name: "Untitled0", 
-        })
-    }
+    const {loadedProject, setLoadedProject} = useContext(ProjectContext);
 
     return (
         <div style={{
@@ -19,10 +13,11 @@ export default function Landing(props) {
             flexFlow: "column",
             justifyContent: "space-evenly",
             width: "100dvw",
-            height: "calc(100dvh - 50px)"
+            height: "calc(100dvh - 50px)",
             // backgroundImage: "url(auth_bg.png)",
             // backgroundRepeat: "no-repeat",
             // backgroundSize: "100% 100%"
+            backgroundColor: "#f4f4f4"
         }}>
             <div style={{display: "flex", justifyContent: "space-evenly"}}>
                 <Button onClick={props.createProject}>
