@@ -1,8 +1,9 @@
 import {useContext, useState, useEffect, useRef} from 'react';
 import {ProjectContext} from '../contexts';
 import {ProjectCanvas} from '../components';
-import { VerticalSplit, HorizontalSplit, Close, Videocam } from '@mui/icons-material';
-import { IconButton, Typography } from '@mui/material';
+import { VerticalSplit, HorizontalSplit, Close, Videocam, 
+    MoreHoriz, MoreVert } from '@mui/icons-material';
+import { IconButton, Typography, Menu, MenuItem, Divider, Grow } from '@mui/material';
 
 export default function ProjectFrame(props) {
     // console.log("projectframe", props)
@@ -12,30 +13,13 @@ export default function ProjectFrame(props) {
     const [innerHeight, setInnerHeight] = useState("");
     const [top, setTop] = useState("");
     const [left, setLeft] = useState("");
+    const [tabMaxWidth, setTabMaxWidth] = useState("");
     const [dragStarted, setDragStarted] = useState(false);
+    const [camMenuOpen, setCamMenuOpen] = useState(false);
+    const [camMenuAnchor, setCamMenuAnchor] = useState(undefined);
     const outer = 30;
 
-    // useEffect(() => {
-    //     const newwidth = `calc(${props.width[0].toFixed(2)}dvw - ${props.width[1].toFixed(2)}px)`;
-    //     const newheight = `calc(${props.height[0].toFixed(2)}dvh - ${props.height[1].toFixed(2)}px)`;
-    //     setWidth(newwidth);
-    //     setHeight(newheight);
-
-    //     const innerwidth = `calc(${props.width[0].toFixed(2)}dvw - ${(props.width[1] + outer).toFixed(2)}px)`;
-    //     const innerheight = `calc(${props.height[0].toFixed(2)}dvh - ${(props.height[1] + outer).toFixed(2)}px)`;
-    //     setInnerWidth(innerwidth);
-    //     setInnerHeight(innerheight);
-
-    //     const top = `calc(${props.top[0].toFixed(2)}dvh + ${props.top[1].toFixed(2)}px)`;
-    //     const left = `calc(${props.left[0].toFixed(2)}dvw + ${props.left[1].toFixed(2)}px)`;
-    //     setTop(top);
-    //     setLeft(left);
-    // }, [props.width, props.height, props.top, props.left]);
-
     useEffect(() => {
-        // if (props.change === false) {
-        //     return;
-        // }
         let newwidth = "", newinnerwidth = "", newleft = "";
         let newheight = "", newinnerheight = "", newtop = "";
         if (props.part === 0) {
@@ -93,6 +77,8 @@ export default function ProjectFrame(props) {
             newinnerheight = `calc(${height[0].toFixed(2)}dvh - ${(height[1] + outer).toFixed(2)}px)`;
             newtop = `calc(${top[0].toFixed(2)}dvh + ${top[1].toFixed(2)}px)`;
             newleft = `calc(${left[0].toFixed(2)}dvw + ${left[1].toFixed(2)}px)`;
+            const tabmaxwidth = `calc(${width[0].toFixed(2)}dvw - ${(width[1] + outer + 23).toFixed(2)}px)`;
+            setTabMaxWidth(tabmaxwidth);
             
         }
         setWidth(newwidth);
@@ -101,7 +87,6 @@ export default function ProjectFrame(props) {
         setInnerHeight(newinnerheight);
         setTop(newtop);
         setLeft(newleft);
-        // props.revertChange(props.id);
     }, [props.ratio, props.change]);
 
     useEffect(() => {
@@ -122,6 +107,20 @@ export default function ProjectFrame(props) {
         setDragStarted(false);
     };
 
+    const camMenuClick = (evt) => {
+        setCamMenuAnchor(evt.currentTarget);
+        setCamMenuOpen(true);
+    }
+
+    const camMenuClose = () => {
+        setCamMenuOpen(false);
+    };
+
+    const camChange = (mode) => {
+        props.camchange(props, mode);
+        setCamMenuOpen(false);
+    };
+
     return (
         <div id={props.id} style={{
             display: "flex", 
@@ -132,7 +131,7 @@ export default function ProjectFrame(props) {
             position: "absolute",
             top: top,
             left: left,
-            opacity: props.splitted ? 0 : 1
+            opacity: props.splitted ? 0 : 1,
         }}>
             {innerWidth !== "" && innerHeight !== "" && (
                 <>
@@ -160,6 +159,7 @@ export default function ProjectFrame(props) {
                                 alignItems: "center",
                                 marginLeft: "13px",
                                 marginTop: "4px",
+                                maxWidth: tabMaxWidth
                             }}>
                                 <div style={{
                                     position: "absolute",
@@ -173,29 +173,41 @@ export default function ProjectFrame(props) {
                                     borderTop: "1px solid #dddddd",
                                     borderTopRightRadius: "10px",
                                     borderTopLeftRadius: "10px",
+                                    maxWidth: tabMaxWidth
                                 }}/>
                                 <Typography sx={{
                                     marginLeft: "13px",
                                     marginTop: "13px",
                                     zIndex: 11,
+                                    overflow: "hidden",
+                                    whiteSpace: "nowrap",
+                                    textOverflow: "ellipsis"
                                 }}>
                                     {
-                                        // props.cam === "3dp" ? "3D Perspective" :
-                                        // (props.cam === "3do" ? "3D Orthographic" : 
-                                        // (props.cam === "xy" ? "X-Y Plane" : ""))
-                                        props.id
+                                        props.cam === "3dp" ? "3D Perspective" :
+                                        props.cam === "3do" ? "3D Orthographic" : 
+                                        props.cam === "xy" ? "X-Y Plane" : 
+                                        props.cam === "yx" ? "Y-X Plane" :
+                                        props.cam === "xz" ? "X-Z Plane" :
+                                        props.cam === "zx" ? "Z-X Plane" :
+                                        props.cam === "yz" ? "Y-Z Plane" :
+                                        props.cam === "zy" ? "Z-Y Plane" : ""                                        
+                                        // props.id
                                     }
                                 </Typography>
-                                <IconButton sx={{
-                                    marginRight: "-2px",
-                                    marginTop: "13px",
-                                    zIndex: 12,
-                                }}>
-                                    <Close size="x-small" sx={{
-                                        display: "flex", 
-                                        justifyContent: "end"
-                                    }} />
-                                </IconButton>                        
+                                {props.id !== 'init' && (
+                                    <IconButton
+                                        onClick={() => props.close(props)} sx={{
+                                        marginRight: "-2px",
+                                        marginTop: "13px",
+                                        zIndex: 12,
+                                    }}>
+                                        <Close size="x-small" sx={{
+                                            display: "flex", 
+                                            justifyContent: "end"
+                                        }} />
+                                    </IconButton>  
+                                )}                                                      
                             </div>
                             <div style={{
                                 display: "flex",
@@ -215,12 +227,31 @@ export default function ProjectFrame(props) {
                                     justifyContent: "space-between",
                                     backgroundColor: "#f4f4f4"
                                 }}>
-                                    <IconButton sx={{color: "black", width: "29px",
+                                    <IconButton onClick={camMenuClick} sx={{color: "black", width: "29px",
                                         paddingTop: "3px", paddingBottom: "3px",
                                         marginTop: "6px"
                                     }} >
                                         <Videocam/>
                                     </IconButton>
+                                    <Menu
+                                        anchorEl={camMenuAnchor}
+                                        open={camMenuOpen}
+                                        onClose={camMenuClose}
+                                        TransitionComponent={Grow}
+                                        anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+                                    >
+                                        <MenuItem onClick={() => camChange("3dp")} >3D Perspective</MenuItem>
+                                        <MenuItem onClick={() => camChange("3do")} >3D Orthographic</MenuItem>
+                                        <Divider />
+                                        <MenuItem onClick={() => camChange("xy")} >X-Y Plane</MenuItem>
+                                        <MenuItem onClick={() => camChange("yx")} >Y-X Plane</MenuItem>
+                                        <Divider />
+                                        <MenuItem onClick={() => camChange("xz")} >X-Z Plane</MenuItem>
+                                        <MenuItem onClick={() => camChange("zx")} >Z-X Plane</MenuItem>
+                                        <Divider />
+                                        <MenuItem onClick={() => camChange("yz")} >Y-Z Plane</MenuItem>
+                                        <MenuItem onClick={() => camChange("zy")} >Z-Y Plane</MenuItem>
+                                    </Menu>
                                     <IconButton sx={{color: "black", width: "29px",
                                         paddingTop: "3px", paddingBottom: "3px",
                                         marginBottom: "10px"}} onClick={() => props.horsplit(props)}>
@@ -237,9 +268,8 @@ export default function ProjectFrame(props) {
                                 height: height,
                                 position: "absolute",
                                 width: "3px",
-                                backgroundColor: "#000000",
                                 right: "-2px",
-                                zIndex: 11,
+                                zIndex: 99999 - props.idx,
                                 cursor: "col-resize",
                                 opacity: 0
                             }}
@@ -248,13 +278,12 @@ export default function ProjectFrame(props) {
                             onDragEnd={dragEnd}
                             >
                                 <div style={{
-                                    width: "16px",
+                                    width: "12px",
                                     height: "40px",
-                                    backgroundColor: "#000000",
-                                    borderRadius: "16px",
+                                    borderRadius: "12px",
                                     position: "absolute",
                                     top: "calc(50% - 20px)",
-                                    right: "-7px"
+                                    right: "-5px"
                                 }}></div>
                             </div>
                             <div style={{
@@ -263,19 +292,24 @@ export default function ProjectFrame(props) {
                                 width: "3px",
                                 backgroundColor: dragStarted ? "#57769e" : "#000000",
                                 right: "-2px",
-                                zIndex: 9,
+                                zIndex: 99999 - props.idx - 1,
                                 cursor: "col-resize"
                             }}>
                                 <div style={{
-                                    width: "16px",
+                                    width: "12px",
                                     height: "40px",
                                     backgroundColor: dragStarted ? "#57769e" : "#000000",
-                                    borderRadius: "16px",
-                                    position: "absolute",
+                                    borderRadius: "12px",
+                                    position: "relative",
                                     top: "calc(50% - 20px)",
-                                    right: "-7px",
-                                    zIndex: 10
-                                }}></div>
+                                    right: "5px"
+                                }}>
+                                    <MoreVert 
+                                        preserveAspectRatio='none'
+                                        sx={{color: "white", 
+                                            width: "12px", 
+                                            height: "40px"}} />
+                                </div>
                             </div>
                         </>
                         
@@ -286,9 +320,8 @@ export default function ProjectFrame(props) {
                                 height: "3px",
                                 position: "absolute",
                                 width: width,
-                                backgroundColor: "#000000",
                                 bottom: "0px",
-                                zIndex: 11,
+                                zIndex: 99999 - props.idx,
                                 cursor: "row-resize",
                                 opacity: 0
                             }}
@@ -298,34 +331,38 @@ export default function ProjectFrame(props) {
                             >
                                 <div style={{
                                     width: "40px",
-                                    height: "16px",
-                                    backgroundColor: "#000000",
-                                    borderRadius: "16px",
+                                    height: "12px",
+                                    borderRadius: "12px",
                                     position: "absolute",
                                     left: "calc(50% - 20px)",
-                                    bottom: "-7px"
+                                    bottom: "-5px"
                                 }}></div>
                             </div>
-                            <div draggable style={{
+                            <div style={{
                                 height: "3px",
                                 position: "absolute",
                                 width: width,
                                 backgroundColor: dragStarted ? "#57769e" : "#000000",
-                                // backgroundColor: "#57769e",
                                 bottom: "0px",
-                                zIndex: 9,
+                                zIndex: 99999 - props.idx - 1,
                                 cursor: "row-resize"
                             }} >
                                 <div style={{
                                     width: "40px",
-                                    height: "16px",
+                                    height: "12px",
                                     backgroundColor: dragStarted ? "#57769e" : "#000000",
-                                    borderRadius: "16px",
-                                    position: "absolute",
+                                    borderRadius: "12px",
+                                    position: "relative",
                                     left: "calc(50% - 20px)",
-                                    bottom: "-7px",
-                                    zIndex: 10
-                                }}></div>
+                                    bottom: "5px",
+                                    lineHeight: "12px"
+                                }}>
+                                    <MoreHoriz 
+                                        preserveAspectRatio='none'
+                                        sx={{color: "white", 
+                                            height: "12px", 
+                                            width: "40px"}} />
+                                </div>
                             </div>
                         </>
                         

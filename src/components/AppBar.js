@@ -98,7 +98,7 @@ export default function AppBar(props) {
                 TransitionComponent={Grow}
                 anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
               >
-                  <MenuItem onClick={() => action(props.materialDialog)}>Materials</MenuItem>
+                  {/* <MenuItem onClick={() => action(props.materialDialog)}>Materials</MenuItem>
                   <Divider />
                   <MenuItem 
                     onClick={handleExpand}
@@ -107,9 +107,11 @@ export default function AppBar(props) {
                       Section Properties
                       <ArrowRight sx={{marginLeft: "auto"}} />
                   </MenuItem>
+                  <Divider /> */}
+                  <MenuItem onClick={() => action(props.coordSysDialog)}>Coordinate System</MenuItem>
+                  <MenuItem>Units</MenuItem>
                   <Divider />
-                  <MenuItem onClick={() => action(props.gridDialog)}>Grids</MenuItem>
-                  <Divider />
+                  <MenuItem onClick={() => action(props.gridDialog)}>Grid</MenuItem>                  
                   <MenuItem>Groups</MenuItem>
                   <MenuItem>Section Cuts</MenuItem>
                   <MenuItem>Displacements</MenuItem>

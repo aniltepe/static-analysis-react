@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 
-export const GridContext = createContext({
+export const ConfigContext = createContext({
     'gridStep': {},
     'setGridStep': () => {},
     'gridCount': {},
@@ -10,5 +10,6 @@ export const GridContext = createContext({
     'gridLines': [],
     'setGridLines': () => {},
     'resetGrid': {},
-    'setResetGrid': () => {}
+    'setResetGrid': () => {},
+    'coordSystem': {}
 })

@@ -1,18 +1,9 @@
 import {useContext, useState, useEffect, useRef} from 'react';
-import {ProjectContext, GridContext} from '../contexts';
 import {ProjectFrame} from '../components';
 import { height, width } from '@mui/system';
 
 
 export default function ProjectView() {
-    // const [frames, setFrames] = useState([{
-    //     id: "init",
-    //     cam: '3dp',
-    //     width: [100, 0],
-    //     height: [100, 80],
-    //     top: [0, 80],
-    //     left: [0, 0],
-    // }]);
     const [frames, setFrames] = useState([{
         id: "init",
         cam: '3dp',
@@ -23,6 +14,7 @@ export default function ProjectView() {
         ratio: 1.0,
         split: 0, // 0: None, 1: Vertical, 2: Horizontal
         part: 0, // 0: Init, 1: Original, 2: New
+        parent: undefined
     }]);
     const dragLastPos = useRef(null);
 
@@ -31,6 +23,7 @@ export default function ProjectView() {
     }, [frames]);
 
     const verticalSplit = (frame) => {
+        // const par = document.getElementById(frame.id);
         const fNew = [{
             id: frame.id + "_vsplit", 
             twin: frame.id + "_vnew", 
@@ -92,105 +85,6 @@ export default function ProjectView() {
         setFrames(fsNew);
     };
 
-    const verticalSplit2 = (frame) => {
-        const newWidth = frame.width.map((val) => val/2);
-        const fNew = [{
-            id: frame.id + "_vsplit", 
-            cam: frame.cam, 
-            width: newWidth, 
-            height: frame.height,
-            top: frame.top,
-            left: frame.left,
-            ratio: 0.5,
-            twin: frame.id + "_vsnew",
-            // parent: {id: frame.id, width: frame.width, height: frame.height, top: frame.top, left: frame.left}
-            parent: frame
-        }, {
-            id: frame.id + "_vsnew", 
-            cam: frame.cam, 
-            width: newWidth, 
-            height: frame.height,
-            top: frame.top,
-            left: frame.left.map((val, idx) => val + newWidth[idx]),
-            ratio: 0.5,
-            twin: frame.id + "_vsplit",
-            // parent: {id: frame.id, width: frame.width, height: frame.height, top: frame.top, left: frame.left}
-            parent: frame
-        }];
-        const fsNew = [...frames.map((val) => {
-            if (val.id !== frame.id) {
-                return val;
-            }
-            else {
-                return {
-                    ...val, 
-                    child1: val.id + "_vsplit",
-                    child2: val.id + "_vsnew",
-                    splitted: true
-                };
-            }
-        }), ...fNew];
-        setFrames(fsNew);
-    };
-
-    const verticalSplit1 = (frame) => {
-        const newWidth = frame.width.map((val) => val/2);
-        const fNew = {
-            id: frame.id + "_vsnew", 
-            cam: frame.cam, 
-            width: newWidth, 
-            height: frame.height,
-            top: frame.top,
-            left: frame.left.map((val, idx) => val + newWidth[idx]),
-            ratio: 0.5,
-            twin: frame.id + "_vsplit"
-        };
-        const fsNew = [...frames.map((val) => {
-            if (val.id !== frame.id) {
-                return val;
-            }
-            else {
-                return {
-                    ...val, 
-                    id: val.id + "_vsplit", 
-                    width: val.width.map((w) => w/2),
-                    ratio: 0.5,
-                    twin: val.id + "_vsnew"
-                };
-            }
-        }), fNew];
-        setFrames(fsNew);
-    };
-
-    const horizontalSplit1 = (frame) => {
-        const newHeight = frame.height.map((val) => val/2);
-        const fNew = {
-            id: frame.id + "_hsnew", 
-            cam: frame.cam, 
-            width: frame.width, 
-            height: newHeight,
-            top: [frame.top[0] + newHeight[0], frame.top[1] - newHeight[1]],
-            left: frame.left,
-            ratio: 0.5,
-            twin: frame.id + "_hsplit"
-        };
-        const fsNew = [...frames.map((val) => {
-            if (val.id !== frame.id) {
-                return val;
-            }
-            else {
-                return {
-                    ...val, 
-                    id: val.id + "_hsplit", 
-                    height: val.height.map((h) => h/2),
-                    ratio: 0.5,
-                    twin: val.id + "_hsnew"
-                };
-            }
-        }), fNew];
-        setFrames(fsNew);
-    };
-
     const verticalDragStart = (evt, frame) => {
         // console.log(evt.clientX, "DRAGSTART");
         dragLastPos.current = {x: evt.clientX, y: evt.clientY};
@@ -205,17 +99,25 @@ export default function ProjectView() {
         if (evt.clientX === 0 && evt.clientY === 0) {
             return;
         }
-        const deltaX = ((evt.clientX - dragLastPos.current.x)) /
-            evt.target.parentElement.parentElement.clientWidth;
-        if (Math.abs(deltaX) < 0.02) {
+        const par = document.getElementById(frame.parent.id);
+        // console.log(par, par.clientWidth, par.offsetLeft)
+        const deltaX = ((evt.clientX - dragLastPos.current.x)) / par.clientWidth;
+        if (Math.abs(deltaX) < 0.04) {
             return;
         }
-        const tolerance = 0.16;
-        if (evt.clientX / evt.target.parentElement.parentElement.clientWidth < tolerance ||
-            evt.clientX / evt.target.parentElement.parentElement.clientWidth > 1-tolerance) {
-            return;        
+        const tolerance = 100;
+        if (evt.clientX - par.offsetLeft < tolerance ||
+            evt.clientX - par.offsetLeft > par.clientWidth - tolerance) {
+            return;
         }
+        // const children = document.querySelectorAll('[id^="' + frame.id + '"]');
+        // for (let i = 0; i < children.length; i++) {
+        //     if (children.item(i).clientWidth - (evt.clientX - dragLastPos.current.x) < tolerance) {
+        //         return;
+        //     }
+        // }        
         dragLastPos.current = {x: evt.clientX, y: evt.clientY};
+        console.log("delta X:", deltaX);
         const fsNew = [...frames.map((val) => {
             if (val.id === frame.id) {                
                 return {...val, ratio: val.ratio + deltaX};
@@ -224,8 +126,12 @@ export default function ProjectView() {
                 return {...val, ratio: val.ratio - deltaX};        
             }
             else {
-                const items = [];
-                let item = val.parent;
+                // console.log("id: ", val.id, "deltaX:", deltaX);
+                if (val.id === "init") {
+                    return val;
+                }
+                let items = [];
+                let item = JSON.parse(JSON.stringify(val.parent));
                 while (true) {
                     if (item === undefined) {
                         break;
@@ -240,9 +146,10 @@ export default function ProjectView() {
                     item = item.parent;
                 }
                 for (let i = 0; i < items.length - 1; i++) {
-                    items[i + 1].parent = items[i]
+                    console.log(items[i+1].id, items[i+1].ratio)
+                    items[i + 1].parent = items[i];
                 }
-                console.log(val.id, items[items.length - 1]);
+                // console.log(val.id, items[items.length - 1]);
                 return {...val, parent: items[items.length - 1], change: val.change+1};
             }
         })];
@@ -253,16 +160,22 @@ export default function ProjectView() {
         if (evt.clientX === 0 && evt.clientY === 0) {
             return;
         }
-        const deltaY = ((evt.clientY - dragLastPos.current.y)) /
-            evt.target.parentElement.parentElement.clientHeight;
-        if (Math.abs(deltaY) < 0.02) {
+        const par = document.getElementById(frame.parent.id);
+        const deltaY = ((evt.clientY - dragLastPos.current.y)) / par.clientHeight;
+        if (Math.abs(deltaY) < 0.04) {
             return;
         }
-        const tolerance = 0.16;
-        if (evt.clientY / evt.target.parentElement.parentElement.clientHeight < tolerance ||
-            evt.clientY / evt.target.parentElement.parentElement.clientHeight > 1-tolerance) {
-            return;        
-        } 
+        const tolerance = 100;
+        if (evt.clientY - par.offsetTop < tolerance ||
+            evt.clientY - par.offsetTop > par.clientHeight - tolerance) {
+            return;
+        }
+        // const children = document.querySelectorAll('[id^="' + frame.id + '"]');
+        // for (let i = 0; i < children.length; i++) {
+        //     if (children.item(i).clientHeight + (evt.clientY - dragLastPos.current.y) < tolerance) {
+        //         return;
+        //     }
+        // }  
         dragLastPos.current = {x: evt.clientX, y: evt.clientY};
         const fsNew = [...frames.map((val) => {
             if (val.id === frame.id) {                
@@ -272,8 +185,11 @@ export default function ProjectView() {
                 return {...val, ratio: val.ratio - deltaY};        
             }
             else {
-                const items = [];
-                let item = val.parent;
+                if (val.id === "init") {
+                    return val;
+                }
+                let items = [];
+                let item = JSON.parse(JSON.stringify(val.parent));
                 while (true) {
                     if (item === undefined) {
                         break;
@@ -297,93 +213,70 @@ export default function ProjectView() {
         setFrames(fsNew);        
     };
 
-    const verticalDrag1 = (evt, frame) => {
-        if (evt.clientX === 0 && evt.clientY === 0) {
-            return;
-        }
-        const deltaX = ((evt.clientX - dragLastPos.current.x)) /
-            evt.target.parentElement.parentElement.clientWidth;
-        if (Math.abs(deltaX) < 0.02) {
-            return;
-        }
-        const tolerance = 0.16;
-        if (evt.clientX / evt.target.parentElement.parentElement.clientWidth < tolerance ||
-            evt.clientX / evt.target.parentElement.parentElement.clientWidth > 1-tolerance) {
-            return;        
-        } 
-        // evt.nativeEvent.preventDefault();
-        let twinHasSplits = false;
-        dragLastPos.current = {x: evt.clientX, y: evt.clientY};
-        const newWidth = frame.width.map((w) => (w/frame.ratio)*(frame.ratio+deltaX));
+    const camChange = (frame, mode) => {
         const fsNew = [...frames.map((val) => {
-            if (val.id === frame.id) {                
-                return {
-                    ...val, 
-                    width: newWidth,
-                    ratio: val.ratio + deltaX
-                };
-            }
-            else if (val.id === frame.twin && !val.splitted) {
-                const newWidthTwin = val.width.map((w) => (w/val.ratio)*(val.ratio-deltaX));
-                return {
-                    ...val, 
-                    width: newWidthTwin,
-                    left: frame.left.map((val, idx) => val + newWidth[idx]),
-                    ratio: val.ratio - deltaX
-                };        
-            }
-            else {
+            if (val.id !== frame.id) {
                 return val;
             }
-        })];
-        setFrames(fsNew);        
-    };
-
-    const horizontalDrag1 = (evt, frame) => {
-        if (evt.clientX === 0 && evt.clientY === 0) {
-            return;
-        }
-        const deltaY = ((evt.clientY - dragLastPos.current.y)) /
-            evt.target.parentElement.parentElement.clientHeight;
-        if (Math.abs(deltaY) < 0.02) {
-            return;
-        }
-        const tolerance = 0.16;
-        if (evt.clientY / evt.target.parentElement.parentElement.clientHeight < tolerance ||
-            evt.clientY / evt.target.parentElement.parentElement.clientHeight > 1-tolerance) {
-            return;        
-        } 
-        // evt.nativeEvent.preventDefault();
-        dragLastPos.current = {x: evt.clientX, y: evt.clientY};
-        const newHeight = frame.height.map((h) => (h/frame.ratio)*(frame.ratio+deltaY));
-        const fsNew = [...frames.map((val) => {
-            if (val.id === frame.id) {                
-                return {
-                    ...val, 
-                    height: newHeight,
-                    ratio: val.ratio + deltaY
-                };
-            }
-            else if (val.id.startsWith(frame.twin)) {
-                const newHeightTwin = val.height.map((h) => (h/val.ratio)*(val.ratio-deltaY));
-                return {
-                    ...val, 
-                    height: newHeightTwin,
-                    top: [frame.top[0] + newHeight[0], frame.top[1] - newHeight[1]],
-                    ratio: val.ratio - deltaY
-                };
-            }
             else {
-                return val;
+                return {...val, cam: mode};
             }
         })];
         setFrames(fsNew);
     };
 
-    const revertChange = (frameid) => {
-        const fsNew = [...frames.map((f) => f.id === frameid ? {...f, change: false} : f)];
+    const closeFrame = (frame) => {
+        const fsNew = [...frames.map((val) => {            
+            if (val.id === frame.twin) {
+                let newVal = {...val, 
+                    id: val.parent.id,
+                    twin: val.parent.twin,
+                    ratio: val.parent.ratio,
+                    part: val.parent.part, 
+                    parent: val.parent.parent};
+                if (val.parent.id === "init") {
+                    newVal = {...newVal, 
+                        width: val.parent.width,
+                        height: val.parent.height,
+                        top: val.parent.top,
+                        left: val.parent.left};
+                }
+                return newVal;
+            }
+            else if (val.id !== frame.id && val.id !== frame.parent.id) {
+                const items = [];
+                let item = val.parent;
+                while (true) {
+                    if (item === undefined) {
+                        break;
+                    }
+                    if (item.id === frame.twin) {
+                        if (item.parent.id === "init") {
+                            item = {...item, 
+                                width: item.parent.width,
+                                height: item.parent.height,
+                                top: item.parent.top,
+                                left: item.parent.left};
+                        }
+                        item = {...item, 
+                            id: item.parent.id,
+                            twin: item.parent.twin,
+                            ratio: item.parent.ratio,
+                            part: item.parent.part, 
+                            parent: item.parent.parent};
+                        
+                    }
+                    items.unshift(item);
+                    item = item.parent;
+                }
+                for (let i = 0; i < items.length - 1; i++) {
+                    items[i + 1].parent = items[i]
+                }
+                return {...val, parent: items[items.length - 1], change: val.change+1};
+            }
+        }).filter((val) => val !== undefined)];
         setFrames(fsNew);
-    }
+    };
 
     return (
         <div style={{
@@ -396,14 +289,16 @@ export default function ProjectView() {
                 return (
                     <ProjectFrame
                         key={val.id}
+                        idx={idx}
                         {...val}
-                        horsplit={horizontalSplit}
                         versplit={verticalSplit}
+                        horsplit={horizontalSplit}
                         verdrag={verticalDrag}
                         hordrag={horizontalDrag}
                         verdragstart={verticalDragStart}
                         hordragstart={horizontalDragStart}
-                        revertChange={revertChange} /> 
+                        camchange={camChange}
+                        close={closeFrame} /> 
                 )         
             })}  
         </div>

@@ -1,14 +1,19 @@
 import { useContext, useState, Suspense, useEffect } from 'react'
-import { AppBar, Material, Auth, Landing, ProjectView, GridDialog, ToolBar } from './components'
-import { UserContext, ProjectContext, GridContext } from './contexts'
+import { AppBar, Material, Auth, Landing, ProjectView, GridDialog, ToolBar, CoordSysDialog } from './components'
+import { UserContext, ProjectContext, ConfigContext } from './contexts'
 import { calculateGrid } from './utils'
 
 function App() {
   const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
   const [gridDialogOpen, setGridDialogOpen] = useState(false);
+  const [coordSysDialogOpen, setCoordSysDialogOpen] = useState(false);
 
   const [loggedUser, setLoggedUser] = useState(undefined);
   const [loadedProject, setLoadedProject] = useState(undefined);
+
+  const [coordSystem, setCoordSystem] = useState(
+    {x: 'X', y: 'Z', z: 'Y', xn: false, yn: false, zn: false}
+  );
 
   const [gridStep, setGridStep] = useState({});
   const [gridCount, setGridCount] = useState({});
@@ -48,8 +53,13 @@ function App() {
   };
 
   const gridChanged = (oldval, newval) => {
-    setResetGrid(true);
     setUndoList([...undoList, {type: "grid", old: oldval, new: newval}]);
+    setResetGrid(true);
+  };
+
+  const coordSystemChanged = (val) => {
+    setUndoList([...undoList, {type: "coordsys", old: coordSystem, new: val}]);
+    setCoordSystem(val);
   }
 
   return (
@@ -65,14 +75,16 @@ function App() {
                   createProject={createProject}
                   materialDialog={setMaterialDialogOpen}
                   gridDialog={setGridDialogOpen}
+                  coordSysDialog={setCoordSysDialogOpen}
                   logout={logout}
                 />
                 {!loadedProject && (              
                   <Landing createProject={createProject} />
                 )}
                 {loadedProject && (
-                  <GridContext.Provider 
-                    value={{gridStep, gridCount, gridPoints, gridLines, resetGrid, setResetGrid}}>
+                  <ConfigContext.Provider 
+                    value={{gridStep, gridCount, gridPoints, gridLines, 
+                    resetGrid, setResetGrid, coordSystem}}>
                     <>
                       <ToolBar
                         undoList={undoList}
@@ -84,11 +96,18 @@ function App() {
                         <GridDialog
                           open={setGridDialogOpen}
                           grid={setGridComponents}
+                          coordSystem={coordSystem}
                           values={{spacing: gridStep, count: gridCount}}
                           change={gridChanged} /> 
                       )}
+                      { coordSysDialogOpen && (
+                        <CoordSysDialog
+                          open={setCoordSysDialogOpen}
+                          coordSystem={coordSystem}
+                          change={coordSystemChanged} /> 
+                      )}
                     </>
-                  </GridContext.Provider>
+                  </ConfigContext.Provider>
                 )}
               </ProjectContext.Provider> 
           </>        

@@ -1,4 +1,4 @@
 export { UserContext } from './UserContext'
 export { ProjectContext } from './ProjectContext'
-export { GridContext } from './GridContext'
+export { ConfigContext } from './ConfigContext'
 export { HistoryContext } from './HistoryContext'

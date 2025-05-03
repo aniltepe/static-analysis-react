@@ -17,54 +17,82 @@ export default function GridDialog(props) {
         s:{x:false, y:false, z:false},
         c:{x:false, y:false, z:false}
     });
+    const [applyDisabled, setApplyDisabled] = useState(true);
 
     useEffect(() => {
         if (!props.values) {
             return;
         }
+        const x_spac = props.values.spacing[props.coordSystem.x.toLowerCase()];
+        const y_spac = props.values.spacing[props.coordSystem.y.toLowerCase()];
+        const z_spac = props.values.spacing[props.coordSystem.z.toLowerCase()];
         setSpacing({
-            x: Number.isInteger(props.values.spacing.x) ? props.values.spacing.x.toFixed(1) : props.values.spacing.x, 
-            y: Number.isInteger(props.values.spacing.z) ? props.values.spacing.z.toFixed(1) : props.values.spacing.z,
-            z: Number.isInteger(props.values.spacing.y) ? props.values.spacing.y.toFixed(1) : props.values.spacing.y
+            x: Number.isInteger(x_spac) ? x_spac.toFixed(1) : x_spac, 
+            y: Number.isInteger(y_spac) ? y_spac.toFixed(1) : y_spac,
+            z: Number.isInteger(z_spac) ? z_spac.toFixed(1) : z_spac
         });
         setCount({
-            x: (props.values.count.x + 1).toString(),
-            y: (props.values.count.z + 1).toString(),
-            z: (props.values.count.y + 1).toString()
+            x: (props.values.count[props.coordSystem.x.toLowerCase()] + 1).toString(),
+            y: (props.values.count[props.coordSystem.y.toLowerCase()] + 1).toString(),
+            z: (props.values.count[props.coordSystem.z.toLowerCase()] + 1).toString()
         })
     }, [props.values]);
 
+    useEffect(() => {
+        if ((spacing.x === 0 && spacing.y === 0 && spacing.z === 0) ||
+            (count.x === 0 && count.y === 0 && count.z === 0)) {
+            return;
+        }
+        const [newstep, newcount] = transform();
+        if (props.values.spacing.x === newstep.x && 
+            props.values.spacing.y === newstep.y &&
+            props.values.spacing.z === newstep.z &&
+            props.values.count.x === newcount.x &&
+            props.values.count.y === newcount.y &&
+            props.values.count.z === newcount.z) {
+            setApplyDisabled(true);
+        }
+        else {
+            setApplyDisabled(false);
+        }
+    }, [spacing, count]);
+
     const modeChange = (evt) => {
         setMode(evt.target.value);
-    }   
+    };  
 
     const basicShapeChange = (evt) => {
         setBasicShape(evt.target.value);
-    }  
+    }; 
 
     const basicTypeChange = (evt) => {
         setBasicType(evt.target.value);
-    } 
+    };
 
     const handleClose = () => {
         props.open(false);
-    }
+    };
+
+    const transform = () => {
+        const newstep = {
+            x: parseFloat(spacing[props.coordSystem.x.toLowerCase()]),
+            y: parseFloat(spacing[props.coordSystem.y.toLowerCase()]),
+            z: parseFloat(spacing[props.coordSystem.z.toLowerCase()])
+        };
+        const newcount = {
+            x: parseInt(count[props.coordSystem.x.toLowerCase()]) - 1,
+            y: parseInt(count[props.coordSystem.y.toLowerCase()]) - 1,
+            z: parseInt(count[props.coordSystem.z.toLowerCase()]) - 1
+        };
+        return [newstep, newcount];
+    };
 
     const handleApply = () => {
         const invalid = validateApply();
         if (invalid) {
             return;
         }
-        const newstep = {
-            x: parseFloat(spacing.x),
-            y: parseFloat(spacing.z),
-            z: parseFloat(spacing.y)
-        };
-        const newcount = {
-            x: parseInt(count.x) - 1,
-            y: parseInt(count.z) - 1,
-            z: parseInt(count.y) - 1
-        };
+        const [newstep, newcount] = transform();
         props.change(
             {step: props.values.spacing, count: props.values.count},
             {step: newstep, count: newcount}
@@ -199,7 +227,7 @@ export default function GridDialog(props) {
                 )}
             </DialogContent>
             <DialogActions>
-                <Button variant="contained" onClick={handleApply}>
+                <Button variant="contained" onClick={handleApply} disabled={applyDisabled}>
                     <Typography>Apply</Typography>
                 </Button>
                 <Button variant="contained" onClick={handleClose}>
