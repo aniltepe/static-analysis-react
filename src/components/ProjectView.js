@@ -18,9 +18,9 @@ export default function ProjectView() {
     }]);
     const dragLastPos = useRef(null);
 
-    useEffect(() => {
-        console.log(frames)
-    }, [frames]);
+    // useEffect(() => {
+    //     console.log(frames)
+    // }, [frames]);
 
     const verticalSplit = (frame) => {
         // const par = document.getElementById(frame.id);

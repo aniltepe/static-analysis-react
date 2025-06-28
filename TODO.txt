@@ -1,0 +1,6 @@
+front-end
+
+beam çizdirmeyi sağlayacak yapı
+yeni sekme açıldığında statik olarak aynı kamera pozisyonunda açılıyor, mevcut sekmeyi de aynı pozisyona zorluyor
+sağ alttaki orbit anlık hareket etmiyor
+koordinat sistemine ve kamera seçimine göre label'lama değişmeli

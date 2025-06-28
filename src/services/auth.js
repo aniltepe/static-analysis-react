@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseUrl = 'http://192.168.1.141:5001/api';
+const baseUrl = 'http://127.0.0.1:5001/api';
 
 export const auth = (data) => {
     let url = baseUrl + '/auth';

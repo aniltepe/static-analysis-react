@@ -37,6 +37,8 @@ export default function CoordSysDialog(props) {
     const [labels, setLabels] = useState(['','','','','','']);
     const [applyDisabled, setApplyDisabled] = useState(true);
 
+    const [goneOutside, setGoneOutside] = useState(false);
+
     useEffect(() => {
         setCoordSys(props.coordSystem);
     }, [props.coordSystem]);
@@ -82,6 +84,7 @@ export default function CoordSysDialog(props) {
 
     const onPointerUp = () => {
         clicked.current = false;
+        setGoneOutside(false);
         setLabelRot(new THREE.Euler(camRef.current.rotation.x, camRef.current.rotation.y, camRef.current.rotation.z));
     };
 
@@ -104,9 +107,21 @@ export default function CoordSysDialog(props) {
         }
     };
 
+    const onPointerEnter = () => {
+        if (clicked.current) {
+            console.log("gone outside")
+            clicked.current = false
+            setGoneOutside(false)
+        }
+    };
+
     const onPointerLeave = () => {
-        clicked.current = false;
-        setLabelRot(new THREE.Euler(camRef.current.rotation.x, camRef.current.rotation.y, camRef.current.rotation.z));
+        if (clicked.current) {
+            console.log("gone outside");
+            clicked.current = false;
+            setGoneOutside(true);
+            setLabelRot(new THREE.Euler(camRef.current.rotation.x, camRef.current.rotation.y, camRef.current.rotation.z));
+        }
     };
     
     return (
@@ -126,6 +141,7 @@ export default function CoordSysDialog(props) {
                       onPointerDown={onPointerDown}
                       onPointerUp={onPointerUp}
                       onMouseMove={onPointerMove}
+                      onPointerEnter={onPointerEnter}
                       onPointerLeave={onPointerLeave}
                     >
                     <PerspectiveCamera 
@@ -140,9 +156,10 @@ export default function CoordSysDialog(props) {
                       makeDefault
                       enablePan={false}
                       enableZoom={false}
-                      enableRotate={true}
+                      enableRotate={goneOutside ? false : true}
                       enableDamping={false}
                       target={[0, 0, 0]}
+                      dampingFactor={0}
                     />
                     { lines.current.map((ll, idx) => {
                       return (

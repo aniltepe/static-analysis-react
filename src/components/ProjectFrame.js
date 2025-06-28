@@ -1,9 +1,14 @@
-import {useContext, useState, useEffect, useRef} from 'react';
+import {useContext, useState, useEffect, useRef, Fragment} from 'react';
 import {ProjectContext} from '../contexts';
 import {ProjectCanvas} from '../components';
 import { VerticalSplit, HorizontalSplit, Close, Videocam, 
-    MoreHoriz, MoreVert } from '@mui/icons-material';
+    MoreHoriz, MoreVert, 
+    Merge} from '@mui/icons-material';
 import { IconButton, Typography, Menu, MenuItem, Divider, Grow } from '@mui/material';
+
+import { Canvas, useLoader, useThree } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
+import * as THREE from 'three';
 
 export default function ProjectFrame(props) {
     // console.log("projectframe", props)
@@ -18,6 +23,31 @@ export default function ProjectFrame(props) {
     const [camMenuOpen, setCamMenuOpen] = useState(false);
     const [camMenuAnchor, setCamMenuAnchor] = useState(undefined);
     const outer = 30;
+    const defaultCamPos = [-4, 3, 4];
+    const camRef = useRef();
+    const [campos, setCampos] = useState();
+    const [camrot, setCamrot] = useState();
+    const [camobj, setCamobj] = useState();
+    const [orbitOpen, setOrbitOpen] = useState(true);
+
+
+    const lines = useRef([
+        [1, 0, 0], 
+        [0, 1, 0], 
+        [0, 0, 1], 
+        [-1, 0, 0], 
+        [0, -1, 0], 
+        [0, 0, -1]
+    ]);
+    const colors = useRef([[
+        "#a13f4d",
+        "#4ab589",
+        "#d1b034"
+    ],[
+        0xa13f4d,
+        0x4ab589,
+        0xd1b034
+    ]]);
 
     useEffect(() => {
         let newwidth = "", newinnerwidth = "", newleft = "";
@@ -70,7 +100,7 @@ export default function ProjectFrame(props) {
                     height = height.map((h) => h * ratios[i]);
                 }
             }
-            console.log(width, height, left, top);
+            // console.log(width, height, left, top);
             newwidth = `calc(${width[0].toFixed(2)}dvw - ${width[1].toFixed(2)}px)`;
             newheight = `calc(${height[0].toFixed(2)}dvh - ${height[1].toFixed(2)}px)`;
             newinnerwidth = `calc(${width[0].toFixed(2)}dvw - ${(width[1] + outer).toFixed(2)}px)`;
@@ -89,9 +119,13 @@ export default function ProjectFrame(props) {
         setLeft(newleft);
     }, [props.ratio, props.change]);
 
-    useEffect(() => {
-        console.log(props.id, width, height);
-    }, [width, height]);
+    // useEffect(() => {
+    //     console.log(props.id, width, height);
+    // }, [width, height]);
+
+    // useEffect(() => {
+    //     console.log(camRef.current);
+    // }, [camRef.current]);
 
     const dragStart = (evt, vertical) => {
         setDragStarted(true);
@@ -119,6 +153,15 @@ export default function ProjectFrame(props) {
     const camChange = (mode) => {
         props.camchange(props, mode);
         setCamMenuOpen(false);
+    };
+
+    const setcam = (cam) => {
+        console.log("setcam", cam)
+        // camRef.current = cam;
+        // setCampos(cam.position);
+        // setCamrot(cam.rotation);
+        // camRef.current.updateProjectionMatrix();
+        setCamobj(cam);
     };
 
     return (
@@ -218,7 +261,8 @@ export default function ProjectFrame(props) {
                                     cam={props.cam} 
                                     width={innerWidth} 
                                     height={innerHeight} 
-                                    id={props.id}/>     
+                                    id={props.id}
+                                    setcam={setcam}/>     
                                 <div style={{
                                     display: "flex",
                                     flexFlow: "column",
@@ -234,29 +278,67 @@ export default function ProjectFrame(props) {
                                         <Videocam/>
                                     </IconButton>
                                     <Menu
-                                        anchorEl={camMenuAnchor}
-                                        open={camMenuOpen}
-                                        onClose={camMenuClose}
-                                        TransitionComponent={Grow}
-                                        anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
-                                    >
-                                        <MenuItem onClick={() => camChange("3dp")} >3D Perspective</MenuItem>
-                                        <MenuItem onClick={() => camChange("3do")} >3D Orthographic</MenuItem>
-                                        <Divider />
-                                        <MenuItem onClick={() => camChange("xy")} >X-Y Plane</MenuItem>
-                                        <MenuItem onClick={() => camChange("yx")} >Y-X Plane</MenuItem>
-                                        <Divider />
-                                        <MenuItem onClick={() => camChange("xz")} >X-Z Plane</MenuItem>
-                                        <MenuItem onClick={() => camChange("zx")} >Z-X Plane</MenuItem>
-                                        <Divider />
-                                        <MenuItem onClick={() => camChange("yz")} >Y-Z Plane</MenuItem>
-                                        <MenuItem onClick={() => camChange("zy")} >Z-Y Plane</MenuItem>
-                                    </Menu>
-                                    <IconButton sx={{color: "black", width: "29px",
-                                        paddingTop: "3px", paddingBottom: "3px",
-                                        marginBottom: "10px"}} onClick={() => props.horsplit(props)}>
-                                        <HorizontalSplit/>
-                                    </IconButton>
+                                            anchorEl={camMenuAnchor}
+                                            open={camMenuOpen}
+                                            onClose={camMenuClose}
+                                            TransitionComponent={Grow}
+                                            anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+                                        >
+                                            <MenuItem onClick={() => camChange("3dp")} >3D Perspective</MenuItem>
+                                            <MenuItem onClick={() => camChange("3do")} >3D Orthographic</MenuItem>
+                                            <Divider />
+                                            <MenuItem onClick={() => camChange("xy")} >X-Y Plane</MenuItem>
+                                            <MenuItem onClick={() => camChange("yx")} >Y-X Plane</MenuItem>
+                                            <Divider />
+                                            <MenuItem onClick={() => camChange("xz")} >X-Z Plane</MenuItem>
+                                            <MenuItem onClick={() => camChange("zx")} >Z-X Plane</MenuItem>
+                                            <Divider />
+                                            <MenuItem onClick={() => camChange("yz")} >Y-Z Plane</MenuItem>
+                                            <MenuItem onClick={() => camChange("zy")} >Z-Y Plane</MenuItem>
+                                    </Menu>                       
+                                    
+                                    <div>
+                                        <IconButton onClick={() => setOrbitOpen(!orbitOpen)} sx={{width: "29px",
+                                            padding: "3px 3px",
+                                            marginBottom: "6px"}}>
+                                            <AxisIcon active={orbitOpen}/>
+                                        </IconButton>
+                                        <IconButton sx={{color: "black", width: "29px",
+                                            paddingTop: "3px", paddingBottom: "3px",
+                                            marginBottom: "10px"}} onClick={() => props.horsplit(props)}>
+                                            <HorizontalSplit/>
+                                        </IconButton>
+                                    </div>
+                                    {orbitOpen && (
+                                        <div style={{position: "absolute",
+                                            right: outer, bottom: 0,
+                                            width: "150px", height: "150px"
+                                        }}>
+                                            <Canvas>
+                                                <PerspectiveCamera ref={camRef}
+                                                  makeDefault
+                                                  position={camobj?.position ? camobj.position : defaultCamPos} 
+                                                  rotation={camobj?.rotation ? camobj.rotation : [0,0,0]}
+                                                // position={[-4, 3, 3]} 
+                                                  near={0.01} 
+                                                  zoom={0.65} 
+                                                  fov={20} />
+                                                { lines.current.map((ll, idx) => {
+                                                  return (
+                                                    <Fragment key={idx}>
+                                                        <mesh>
+                                                          <arrowHelper args={[
+                                                            new THREE.Vector3(ll[0], ll[1], ll[2]), 
+                                                            new THREE.Vector3(0, 0, 0), 1, 
+                                                            colors.current[1][idx % 3], 0.2, 0.1
+                                                          ]}/>
+                                                        </mesh>                        
+                                                    </Fragment>
+                                                  )})
+                                                }
+                                            </Canvas>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </>
@@ -370,5 +452,11 @@ export default function ProjectFrame(props) {
                 </>            
             )}            
         </div>
+    )
+}
+
+const AxisIcon = (props) => {
+    return (
+        <svg style={{width: "24px", height: "24px", fill: props.active ? 'blue' : 'black'}} viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg"><path d="M 6.99514,1.80245 6.2576,3.98086 c 0.15422,0.0866 0.32769,0.14517 0.50913,0.1732 l 0,3.36119 -0.97869,0.56507 0,1.08164 -2.86891,1.65638 C 2.80412,10.67521 2.66662,10.55428 2.51454,10.464 L 1,12.19755 3.25533,11.74707 c -0.002,-0.17683 -0.0381,-0.35636 -0.10457,-0.52751 l 2.82694,-1.63214 1.02069,0.58932 1.02069,-0.58932 2.82694,1.63214 c -0.0664,0.17116 -0.10244,0.35069 -0.10459,0.52755 L 13,12.19196 11.48222,10.46402 c -0.15208,0.0903 -0.28956,0.2112 -0.40457,0.35433 l -2.86888,-1.65636 0,-1.08167 -0.97875,-0.5651 0,-3.36116 c 0.18145,-0.028 0.35493,-0.0866 0.50916,-0.1732 L 6.99514,1.80245 Z"/></svg>
     )
 }

@@ -1,4 +1,5 @@
-import {useContext, useState, useEffect, useRef, forwardRef, useImperativeHandle} from 'react';
+import {useContext, useState, useEffect, useRef, useCallback,
+   forwardRef, useImperativeHandle} from 'react';
 import { ConfigContext } from '../contexts';
 import * as THREE from 'three';
 import { Canvas, useLoader, useThree } from '@react-three/fiber';
@@ -9,6 +10,10 @@ import { FontLoader } from 'three/examples/jsm/Addons.js'
 export default function ProjectCanvas(props) {
     const {gridPoints, gridLines, resetGrid, setResetGrid} = useContext(ConfigContext);
     const gridRef = useRef();
+    const camRef = useCallback((node) => {
+      if (node)
+        props.setcam(node)
+    }, [])
 
     useEffect(() => {
       if (!resetGrid) {
@@ -21,8 +26,15 @@ export default function ProjectCanvas(props) {
     }, [resetGrid]);
 
     // useEffect(() => {
-    //   console.log(props.id, props.width, props.height)
-    // }, [])
+    //   if (camRef.current)
+    //     props.setcam(camRef.current);
+    // }, [camRef.current])
+
+
+    // useEffect(() => {
+      // console.log(props.id, props.width, props.height)
+    // }, []);
+
 
     return (
         <div style={{
@@ -35,20 +47,16 @@ export default function ProjectCanvas(props) {
             width: props.width,
             height: props.height
         }}>
-            <Canvas style={{
-                // width: props.width,
-                // height: props.height
-            }}>
-                <Cameras
-                  cam={props.cam}/>
+            <Canvas>
+                <Cameras ref={camRef} cam={props.cam}/>
                 <OrbitControls
                   makeDefault
                   enablePan={true}
                   enableZoom={true}
                   enableRotate={true}
+                  enableDamping={false}
                   target={[0, 0, 0]}
                 />
-                <ambientLight gridPoints={gridPoints} gridLines={gridLines}/>
                 
                 <Grid ref={gridRef} gridPoints={gridPoints} gridLines={gridLines}/>
                 
@@ -60,42 +68,21 @@ export default function ProjectCanvas(props) {
 }
 
 const Cameras = forwardRef((props, ref) => {
-  const {size, gl} = useThree();
-  // console.log(size);
+  const {size} = useThree();
   const perspCam = useRef();
   const orthoCam = useRef();
   const [camPos, setCamPos] = useState([-4, 3, 4]);
   const prevCam = useRef("");
-  const [orthoLeft, setOrthoLeft] = useState(-1 * size.width / size.height);
-  const [orthoRight, setOrthoRight] = useState(size.width / size.height);
-
-  useEffect(() => {
-    console.log("three size changed");
-    // setOrthoLeft(-1 * size.width / size.height);
-    // setOrthoRight(size.width / size.height);
-    orthoCam.current.updateProjectionMatrix();
-  }, [size.width, size.height]);
-
-  useEffect(() => {
-    console.log("ortholeftright changed");
-    orthoCam.current.updateProjectionMatrix();
-    console.log(size.width, size.height, gl.getSize())
-    // gl.setSize(size.width, size.height);
-  }, [orthoLeft, orthoRight, orthoCam.current]);
-
-  // useEffect(() => {
-  //     console.log(orthoCam.current)
-  // }, [orthoCam.current]);
 
   return (
     <>
-      <PerspectiveCamera 
+      <PerspectiveCamera ref={props.cam == '3dp' ? ref : null}
         makeDefault={props.cam == '3dp'}
         position={camPos} 
         near={0.01} 
         zoom={0.4} 
         fov={20} />
-      <OrthographicCamera ref={orthoCam}
+      <OrthographicCamera ref={props.cam == '3do' ? ref : null}
         makeDefault={props.cam == '3do'} 
         position={camPos} 
         near={0.01} 
@@ -104,6 +91,7 @@ const Cameras = forwardRef((props, ref) => {
         right={size.width / size.height}
         top={1} 
         bottom={-1} 
+        manual
       />
       <OrthographicCamera
         makeDefault={props.cam == 'xy'}
