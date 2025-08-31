@@ -44,8 +44,14 @@ export default function AppBar(props) {
             variant='dense'
             sx={{
               height: "50px", 
-              borderBottom: "1px solid #dddddd", 
-              boxSizing: "border-box"
+              borderTop: "1px solid #7a8a95",
+              borderLeft: "1px solid #7a8a95",
+              borderRight: "1px solid #7a8a95",
+              borderBottom: "1px solid #444444", 
+              boxSizing: "border-box",
+              backgroundColor: "#121f28",
+              color: "white",
+              fontWeight: "600",
             }}
           >
             {/* {loadedProject && (        */}
@@ -53,7 +59,7 @@ export default function AppBar(props) {
               <Button
                 menu="0"
                 onClick={handleClick}
-                sx={{textTransform: "none", color: "black"}}
+                sx={{textTransform: "none", color: "inherit", fontWeight: "inherit"}}
               >
                   Project
               </Button>
@@ -64,7 +70,7 @@ export default function AppBar(props) {
                 TransitionComponent={Grow}
                 anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
                 slotProps={{paper: {sx: {left: "5px !important"}}}}
-                slots={{backdrop: (<Backdrop onClick={(event) => console.log("test", event)} />)}}
+                slots={{backdrop: (<Backdrop open={true} onClick={(event) => console.log("test", event)} />)}}
               //   hideBackdrop
               >
                   <MenuItem onClick={() => action(props.createProject)}>New Project</MenuItem>
@@ -87,7 +93,7 @@ export default function AppBar(props) {
                 menu="1"
                 disabled={!loadedProject}
                 onClick={handleClick}
-                sx={{textTransform: "none", color: "black"}}
+                sx={{textTransform: "none", color: "inherit", fontWeight: "inherit"}}
               >
                   Configure
               </Button>
@@ -109,11 +115,13 @@ export default function AppBar(props) {
                   </MenuItem>
                   <Divider /> */}
                   <MenuItem onClick={() => action(props.coordSysDialog)}>Coordinate System</MenuItem>
-                  <MenuItem>Units</MenuItem>
+                  <MenuItem onClick={() => action(props.unitDialog)}>Units</MenuItem>
                   <Divider />
-                  <MenuItem onClick={() => action(props.gridDialog)}>Grid</MenuItem>                  
-                  <MenuItem>Groups</MenuItem>
-                  <MenuItem>Section Cuts</MenuItem>
+                  <MenuItem onClick={() => action(props.gridDialog)}>Grid</MenuItem>
+                  <Divider />
+                  <MenuItem onClick={() => action(props.materialDialog)}>Materials</MenuItem>
+                  <MenuItem onClick={() => action(props.frameDialog)}>Frame Sections</MenuItem>
+                  <Divider />
                   <MenuItem>Displacements</MenuItem>
                   <Divider />
                   <MenuItem>Load Patterns</MenuItem>
@@ -143,7 +151,7 @@ export default function AppBar(props) {
                   menu="2"
                   disabled={!loadedProject}
                   onClick={handleClick}
-                  sx={{textTransform: "none", color: "black"}}
+                  sx={{textTransform: "none", color: "inherit", fontWeight: "inherit"}}
                 >
                     Draw
               </Button>
@@ -170,7 +178,7 @@ export default function AppBar(props) {
                   menu="3"
                   disabled={!loadedProject}
                   onClick={handleClick}
-                  sx={{textTransform: "none", color: "black"}}
+                  sx={{textTransform: "none", color: "inherit", fontWeight: "inherit"}}
                 >
                     Assign
               </Button>

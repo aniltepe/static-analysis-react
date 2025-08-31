@@ -1,6 +1,6 @@
-import {useContext, useState, useEffect, useRef} from 'react';
-import { Button, Dialog, DialogContent, List, ListItem, Typography,
-    InputLabel, Select, MenuItem,
+import {useState, useEffect} from 'react';
+import { Button, Dialog, DialogContent, Typography,
+    Select, MenuItem,
     DialogActions,
     TextField,
     DialogTitle

@@ -1,3 +1,4 @@
+export { AppContext } from './AppContext'
 export { UserContext } from './UserContext'
 export { ProjectContext } from './ProjectContext'
 export { ConfigContext } from './ConfigContext'

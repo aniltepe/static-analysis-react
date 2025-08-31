@@ -13,8 +13,11 @@ export default function ProjectView() {
         left: [0, 0],
         ratio: 1.0,
         split: 0, // 0: None, 1: Vertical, 2: Horizontal
-        part: 0, // 0: Init, 1: Original, 2: New
-        parent: undefined
+        part: 0, // 0: Init, 1: Original, 2: New,
+        active: true,
+        parent: undefined,
+        initCamPos: [-2, 4, -5],
+        initCamRot: [0, 0, 0],
     }]);
     const dragLastPos = useRef(null);
 
@@ -24,6 +27,7 @@ export default function ProjectView() {
 
     const verticalSplit = (frame) => {
         // const par = document.getElementById(frame.id);
+        console.log(frame.id, frame.camPos, frame.camRot)
         const fNew = [{
             id: frame.id + "_vsplit", 
             twin: frame.id + "_vnew", 
@@ -32,7 +36,10 @@ export default function ProjectView() {
             part: 1, 
             parent: {...frame, split: 1},
             ratio: 0.5,
-            change: 0
+            change: 0,
+            active: frame.active,
+            initCamPos: frame.camPos,
+            initCamRot: frame.camRot,
         }, {
             id: frame.id + "_vnew", 
             twin: frame.id + "_vsplit", 
@@ -41,14 +48,17 @@ export default function ProjectView() {
             part: 2, 
             parent: {...frame, split: 1},
             ratio: 0.5,
-            change: 0
+            change: 0,
+            active: false,
+            initCamPos: frame.camPos,
+            initCamRot: frame.camRot,
         }];
         const fsNew = [...frames.map((val) => {
             if (val.id !== frame.id) {
                 return val;
             }
             else {
-                return {...val, split: 1};
+                return {...val, split: 1, active: false, camPos: undefined, camRot: undefined};
             }
         }), ...fNew];
         setFrames(fsNew);
@@ -63,7 +73,10 @@ export default function ProjectView() {
             part: 1, 
             parent: {...frame, split: 2},
             ratio: 0.5,
-            change: 0
+            change: 0,
+            active: frame.active,
+            initCamPos: frame.camPos,
+            initCamRot: frame.camRot,
         }, {
             id: frame.id + "_hnew", 
             twin: frame.id + "_hsplit", 
@@ -72,14 +85,17 @@ export default function ProjectView() {
             part: 2, 
             parent: {...frame, split: 2},
             ratio: 0.5,
-            change: 0
+            change: 0,
+            active: false,
+            initCamPos: frame.camPos,
+            initCamRot: frame.camRot,
         }];
         const fsNew = [...frames.map((val) => {
             if (val.id !== frame.id) {
                 return val;
             }
             else {
-                return {...val, split: 2};
+                return {...val, split: 2, active: false, camPos: undefined, camRot: undefined};
             }
         }), ...fNew];
         setFrames(fsNew);
@@ -225,6 +241,18 @@ export default function ProjectView() {
         setFrames(fsNew);
     };
 
+    const camParamsChange = (frame, pos, rot) => {
+        const fsNew = [...frames.map((val) => {
+            if (val.id !== frame.id) {
+                return val;
+            }
+            else {
+                return {...val, camPos: pos, camRot: rot};
+            }
+        })];
+        setFrames(fsNew);
+    };
+
     const closeFrame = (frame) => {
         const fsNew = [...frames.map((val) => {            
             if (val.id === frame.twin) {
@@ -233,7 +261,11 @@ export default function ProjectView() {
                     twin: val.parent.twin,
                     ratio: val.parent.ratio,
                     part: val.parent.part, 
-                    parent: val.parent.parent};
+                    parent: val.parent.parent,
+                    active: frame.active,
+                    initCamPos: val.camPos,
+                    initCamRot: val.camRot,
+                };
                 if (val.parent.id === "init") {
                     newVal = {...newVal, 
                         width: val.parent.width,
@@ -275,6 +307,29 @@ export default function ProjectView() {
                 return {...val, parent: items[items.length - 1], change: val.change+1};
             }
         }).filter((val) => val !== undefined)];
+        if (!fsNew.find((f) => f.active && f.split === 0)) {
+            const splitted = fsNew.findIndex((f) => f.active);
+            fsNew[splitted].active = false;
+            const new_active = fsNew.findIndex((f) => f.parent?.id === fsNew[splitted].id);
+            fsNew[new_active].active = true;
+        }
+        setFrames(fsNew);
+    };
+
+    const handleFrameEvent = (frame) => {
+        const fsNew = frames.map((val) => {            
+            if (val.id === frame.id) {
+                return {...val, active: true};
+            }
+            else {
+                if (val.active) {
+                    return {...val, active: false};
+                }
+                else {
+                    return val;
+                }
+            }
+        });
         setFrames(fsNew);
     };
 
@@ -286,6 +341,7 @@ export default function ProjectView() {
             height: "calc(100dvh - 80px)"
         }}> 
             { frames.map((val, idx) => {
+                // console.log("inside return", val)
                 return (
                     <ProjectFrame
                         key={val.id}
@@ -297,8 +353,11 @@ export default function ProjectView() {
                         hordrag={horizontalDrag}
                         verdragstart={verticalDragStart}
                         hordragstart={horizontalDragStart}
-                        camchange={camChange}
-                        close={closeFrame} /> 
+                        camChange={camChange}
+                        camParamsChange={camParamsChange}
+                        close={closeFrame}
+                        handleEvent={handleFrameEvent}
+                    /> 
                 )         
             })}  
         </div>

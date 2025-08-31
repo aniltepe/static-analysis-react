@@ -1,19 +1,13 @@
-import {useContext, useState, useEffect, useRef, Fragment} from 'react';
-import { Button, Dialog, DialogContent, List, ListItem, Typography,
-    InputLabel, Select, MenuItem,
-    DialogActions,
-    TextField,
-    DialogTitle
- } from "@mui/material";
- import { Canvas, useLoader, useThree } from '@react-three/fiber';
- import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
+import {useState, useEffect, useRef, Fragment} from 'react';
+import { Button, Dialog, DialogContent, Typography, DialogActions, DialogTitle } from "@mui/material";
+import { Canvas, useLoader } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three';
 import { FontLoader } from 'three/examples/jsm/Addons.js'
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
 
 export default function CoordSysDialog(props) {
     const camRef = useRef();
-    const clicked = useRef(false);
     const [labelRot, setLabelRot] = useState(new THREE.Euler(0, 0, 0));
     const font = useLoader(FontLoader, 'helvetiker_regular.typeface.json');
     const lines = useRef([
@@ -36,8 +30,6 @@ export default function CoordSysDialog(props) {
     const [coordSys, setCoordSys] = useState({x: '', y: '', z: '', xn: false, yn: false, zn: false})
     const [labels, setLabels] = useState(['','','','','','']);
     const [applyDisabled, setApplyDisabled] = useState(true);
-
-    const [goneOutside, setGoneOutside] = useState(false);
 
     useEffect(() => {
         setCoordSys(props.coordSystem);
@@ -78,22 +70,21 @@ export default function CoordSysDialog(props) {
         setLabelRot(evt.rotation);
     };
 
+    const mouseMove = () => {
+        setLabelRot(new THREE.Euler(camRef.current.rotation.x, camRef.current.rotation.y, camRef.current.rotation.z));
+    };
+
+    const mouseUp = () => {
+        setLabelRot(new THREE.Euler(camRef.current.rotation.x, camRef.current.rotation.y, camRef.current.rotation.z));
+        window.removeEventListener("mousemove", mouseMove)
+        window.removeEventListener("mouseup", mouseUp)
+    };
+
     const onPointerDown = () => {
-        clicked.current = true;
+        window.addEventListener("mousemove", mouseMove)
+        window.addEventListener("mouseup", mouseUp)
     };
 
-    const onPointerUp = () => {
-        clicked.current = false;
-        setGoneOutside(false);
-        setLabelRot(new THREE.Euler(camRef.current.rotation.x, camRef.current.rotation.y, camRef.current.rotation.z));
-    };
-
-    const onPointerMove = () => {
-        if (!clicked.current) {
-            return;
-        }
-        setLabelRot(new THREE.Euler(camRef.current.rotation.x, camRef.current.rotation.y, camRef.current.rotation.z));
-    };
 
     const swap = (a1, a2) => {
         if (a2 !== undefined) {
@@ -104,23 +95,6 @@ export default function CoordSysDialog(props) {
         else {
             const a1l = coordSys.x === a1 ? 'x' : coordSys.y === a1 ? 'y' : coordSys.z === a1 ? 'z' : '';
             setCoordSys({...coordSys, [a1l + 'n']: !coordSys[a1l + 'n']});
-        }
-    };
-
-    const onPointerEnter = () => {
-        if (clicked.current) {
-            console.log("gone outside")
-            clicked.current = false
-            setGoneOutside(false)
-        }
-    };
-
-    const onPointerLeave = () => {
-        if (clicked.current) {
-            console.log("gone outside");
-            clicked.current = false;
-            setGoneOutside(true);
-            setLabelRot(new THREE.Euler(camRef.current.rotation.x, camRef.current.rotation.y, camRef.current.rotation.z));
         }
     };
     
@@ -139,10 +113,6 @@ export default function CoordSysDialog(props) {
                 <Canvas
                       style={{height: "200px"}}
                       onPointerDown={onPointerDown}
-                      onPointerUp={onPointerUp}
-                      onMouseMove={onPointerMove}
-                      onPointerEnter={onPointerEnter}
-                      onPointerLeave={onPointerLeave}
                     >
                     <PerspectiveCamera 
                       onUpdate={camOnUpdate}
@@ -156,7 +126,7 @@ export default function CoordSysDialog(props) {
                       makeDefault
                       enablePan={false}
                       enableZoom={false}
-                      enableRotate={goneOutside ? false : true}
+                      enableRotate={true}
                       enableDamping={false}
                       target={[0, 0, 0]}
                       dampingFactor={0}

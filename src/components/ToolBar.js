@@ -1,4 +1,3 @@
-import {useContext, useState, useEffect, useRef} from 'react';
 import { styled } from '@mui/material/styles';
 import { Redo, Undo } from '@mui/icons-material';
 import { IconButton, Switch, Stack, Typography } from '@mui/material';
@@ -55,7 +54,7 @@ export default function ToolBar(props) {
         <div style={{
             display: "flex", 
             flexFlow: "row",
-            backgroundColor: "white",
+            backgroundColor: "#f4f4f4",
             width: "100dvw",
             height: "30px",
             borderBottom: "1px solid #dddddd", 

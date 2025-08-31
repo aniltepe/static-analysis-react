@@ -25,3 +25,8 @@ code {
 .MuiModal-root {
   z-index: 99999 !important;
 }
+
+.MuiToolbar-root .MuiButton-root.Mui-disabled {
+  opacity: 0.3 !important;
+  color: white !important;
+}
